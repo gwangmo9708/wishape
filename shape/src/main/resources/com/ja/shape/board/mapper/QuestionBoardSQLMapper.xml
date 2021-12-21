@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.board.mapper.QuestionBoardSQLMapper">
+
+	<!-- question_no 뜯어내기 for 이미지 테이블-->
+	<select id="createQuestionNoForImageVo" resultType="int">
+		SELECT question_seq.nextval FROM DUAL
+	</select>
+
+	<!-- 글 쓰기 -->
+	<insert id="writeContentByVo">
+		INSERT INTO question VALUES(
+		    #{no},
+		    #{member_no},
+		    #{content},
+		    #{private_check},
+		    sysdate
+		)		
+	</insert>
+	
+	<!-- 글 리스트 불러오기 -->
+	<select id="getListByNoOrigin" resultType="com.ja.shape.vo.QuestionVo">
+		SELECT * 
+		FROM question 
+		ORDER BY no DESC
+	</select>
+	
+	<!--  동적 쿼리-->
+	<select id="getListByNo" resultType="com.ja.shape.vo.QuestionVo">
+		SELECT t2.* FROM(
+			SELECT t1.*, ROWNUM as rnum FROM(
+				SELECT * 
+				FROM question 
+				<if test="searchQuestionOption != null and searchQuestionOption == 'content'">
+				WHERE content LIKE '%'|| #{searchQuestionWord}  || '%'
+				</if>
+				ORDER BY no DESC
+			)t1
+		)t2
+		<![CDATA[
+		WHERE t2.rnum >=(#{pageNum}-1)*10+1 AND t2.rnum<=#{pageNum}*10
+		]]> 
+	</select>
+	
+	<select id="getQuestionBoardCount" resultType="int">
+		SELECT COUNT(*) FROM question
+		<if test="searchQuestionOption != null and searchQuestionOption == 'content'">
+		WHERE content LIKE '%'|| #{searchQuestionWord}  || '%'
+		</if>
+	</select>
+	
+	
+	<!-- 글을 글 번호 별로 불러오기 -->
+	<select id="getQuestionByNo" resultType="com.ja.shape.vo.QuestionVo">
+		SELECT * FROM question WHERE no = #{no}
+	</select>
+	
+	<!-- reply_no 뜯어내기 for 이미지 테이블-->
+	<select id="createReplyNoForImageVo" resultType="int">
+		SELECT question_reply_seq.nextval FROM DUAL
+	</select>
+	
+	<!-- 질문 답변 쓰기/ 여기 vo는 replyvo -->
+	<insert id="writeReplyByVo">
+		INSERT INTO question_reply VALUES(
+		    #{no},
+            #{question_no},
+            #{content},
+            sysdate
+		)		
+	</insert>
+	
+	<!-- 질문 답변 질문!번호로 불러오기/실수... -->
+	<select id="getReplyByQuestionNo" resultType="com.ja.shape.vo.QuestionReplyVo">
+		SELECT * FROM question_reply WHERE question_no = #{question_no}
+	</select>
+	
+	<!-- 질문 답변 번호로 불러오기 -->
+	<select id="getReplyByNo" resultType="com.ja.shape.vo.QuestionReplyVo">
+		SELECT * FROM question_reply WHERE no = #{no}
+	</select>
+	
+	
+	<!-- 유저가 질문 게시글 지우기 / 댓글도 같이 지워져야 함-->
+	<delete id="deleteQuestionByNo">
+		DELETE FROM question WHERE no = #{no}
+	</delete>
+	
+	<!-- 질문과 같이 지워지는 답변 -->
+	<delete id="deleteReplyWithQuestion">
+		DELETE FROM question_reply WHERE question_no = #{question_no}
+	</delete>
+	
+	
+	<!-- 질문 수정 -->
+	<update id="updateQuestionByNo">
+		UPDATE question
+		SET content = #{content}, 
+		private_check = #{private_check}
+		WHERE no = #{no}
+	</update>
+	
+	<!-- 답변 지우기 -->
+	<delete id="deleteReplyByNo">
+		DELETE FROM question_reply WHERE no = #{no}
+	</delete>
+	
+	<!-- question 이미지 등록 -->
+	<insert id="registerQuestionImage">
+		INSERT INTO question_image VALUES(
+	    question_image_seq.nextval,
+	    #{question_no},
+	    #{file_name},
+	    #{file_link},
+	    sysdate
+		)
+	</insert>
+	
+	<!-- question 이미지 불러오기 -->
+	<select id="getQuestionImageByQuestionNo" resultType="com.ja.shape.vo.QuestionImageVo">
+		SELECT * FROM question_image WHERE question_no = #{question_no}
+	</select>
+	
+	
+	<!-- question 이미지/ 글과 같이 지우기 -->
+	<delete id="deleteQuestionImageByNo">
+		DELETE FROM question_image WHERE question_no = #{question_no}
+	</delete>
+	
+	
+	<!-- question reply 이미지 등록 -->
+	<insert id="registerReplyImage">
+		INSERT INTO question_reply_image VALUES(
+		    question_reply_seq.nextval,
+		    #{question_reply_no},
+		    #{file_name},
+		    #{file_link},
+		    sysdate
+		)
+	</insert>
+	
+	<!-- question reply 이미지 불러오기 -->
+	<select id="getReplyImageByReplyNo" resultType="com.ja.shape.vo.QuestionReplyImageVo">
+		SELECT * FROM question_reply_image WHERE question_reply_no = #{question_reply_no}
+	</select>
+	
+	
+	<!-- question reply 이미지 지우기 -->
+	<delete id="deleteReplyImageByNo">
+		DELETE FROM question_reply_image WHERE question_reply_no = #{question_reply_no}
+	</delete>
+	
+	<!-- reply 수 세기 -->
+	<select id="countReplyByQuestionNo" resultType="int">
+		SELECT COUNT(*) FROM question_reply WHERE question_no = #{question_no}
+	</select>
+	
+	<!-- 이미지 파일 첨부 여부 -->
+	<select id="imageExistance" resultType="int">
+		SELECT COUNT(*) FROM question_image WHERE question_no = #{question_no}
+	</select>
+	
+</mapper>
+  
+  

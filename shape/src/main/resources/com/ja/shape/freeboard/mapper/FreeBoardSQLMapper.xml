@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.freeboard.mapper.FreeBoardSQLMapper">
+	<!-- pk -->
+	<select id="createFreeBoardPK" resultType="int">
+	 select free_board_seq.nextval from Dual
+	</select>
+
+	<!-- 글작성 -->
+	<insert id="writeContent">
+		INSERT INTO Free_Board VALUES(
+		    #{no},
+		    #{member_no},
+		    #{title},
+		    #{content},
+		    0,
+		    SYSDATE
+		)		
+	</insert>
+	
+	<!--  메인페이지목록 -->
+	<select id="getFreeBoardListOriginal" resultType="com.ja.shape.vo.FreeBoardVo">
+	  select * from 
+	  free_board 
+	  ORDER BY no DESC
+	</select>
+	
+	<!-- 검색용동적쿼리 -->
+	<select id="getFreeBoardList" resultType="com.ja.shape.vo.FreeBoardVo">
+		select fbt2.* from(
+			select fbt1.*, ROWNUM as rnum from(
+				select f.* from free_board f, member m
+				where f.member_no = m.no
+				<if test="searchOptionFreeBoard != null and searchWordFreeBoard != null">
+					<choose>
+						<when test="searchOptionFreeBoard == 'freeboard_title'">
+							and f.title like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+						<when test="searchOptionFreeBoard == 'freeboard_content'">
+							and f.content like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+						<when test="searchOptionFreeBoard == 'freeboard_id'">
+							and m.id like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+					</choose>
+				</if>
+				order by f.no DESC
+			)fbt1
+		)fbt2 
+	<![CDATA[
+	where fbt2.rnum >= (#{fbPageNum}-1)*10+1 and fbt2.rnum <= #{fbPageNum}*10
+	]]>
+	</select>
+	
+	
+	<select id="getTotalFreeBoardCount" resultType="int">
+		
+			select count(*) from free_board f, member m
+				where f.member_no = m.no
+				<if test="searchOptionFreeBoard != null and searchWordFreeBoard != null">
+					<choose>
+						<when test="searchOptionFreeBoard == 'freeboard_title'">
+							and f.title like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+						<when test="searchOptionFreeBoard == 'freeboard_content'">
+							and f.content like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+						<when test="searchOptionFreeBoard == 'freeboard_id'">
+							and m.id like '%' || #{searchWordFreeBoard} || '%'
+						</when>
+					</choose>
+				</if>
+	
+	</select>
+	
+<!--글상세보기 -->
+	<select id="getFreeBoardByNo" resultType="com.ja.shape.vo.FreeBoardVo">
+	   select * from free_board WHERE no=#{no}
+	</select>
+	
+	<!-- 조회수 -->
+	<update id="increaseReadCount">
+	  update free_board 
+	  set read_count = read_count +1
+	  where no = #{no}
+	</update>
+	
+	<!-- 삭제 -->
+	<delete id="deleteByNo">
+	   delete from free_board where no=#{no}
+	</delete>
+	
+	<!-- 수정 -->
+	<update id="update">
+	   update free_board 
+	   set title = #{title},
+	   content = #{content}
+	   where no=#{no}
+	</update>
+	
+	<!-- 좋아요 -->
+	<insert id="like">
+	 insert into free_board_like values(
+	    free_board_like_seq.nextval,
+	    #{free_board_no},
+	    #{member_no},
+	    SYSDATE
+	 )
+	</insert>
+	
+	<!-- 좋아요취소 -->
+	<delete id ="unLike">
+	   delete from free_board_like
+	   where member_no = #{member_no} and free_board_no = #{free_board_no}
+	</delete>
+	
+	<!-- 내가 좋아요햇나요 -->
+	<select id="myLikeCount" resultType="int">
+	   select count(*) from free_board_like
+	   where member_no = #{member_no} and free_board_no = #{free_board_no}
+	</select>
+	
+<!--전체좋아요-->
+	<select id="totalLikeCount" resultType="int">
+	  select count(*) from free_board_like 
+	  where free_board_no = #{freeBoardNo}
+	</select>
+	
+	<!-- 이미지관련 -->
+	<insert id="registerImage">
+      insert into free_board_image values(
+         free_board_image_seq.nextval,
+          #{free_board_no},
+          #{file_name},
+          #{file_link},
+          SYSDATE
+      )	
+	</insert>
+	<!-- 이미지가져오기 -->
+	<select id="getFreeBoardImagesByBoardNo" resultType="com.ja.shape.vo.FreeBoardImageVo">
+	  select * from free_board_image where free_board_no = #{freeBoardNo}
+	</select>
+	<!--이미지삭제 -->
+	<delete id="deleteImageByNo">
+	   delete from free_board_image
+	   where free_board_no = #{freeBoardNo}
+	</delete>
+	<!-- 이미지 존재여부 (이미지가있다면 글목록에 사진아이콘표시하려고) -->
+	<select id="imageExist" resultType="int">
+	 select count(*) from free_board_image where free_board_no = #{freeBoardNo}
+	</select>
+	
+	
+	<!-- 댓글기능 -->
+	<select id="createFreeBoardReplyPK" resultType="int">
+	   select free_board_reply_seq.nextval from Dual
+	</select>
+	
+	<insert id="writeReply">
+		INSERT INTO Free_Board_Reply VALUES(
+		    #{no},
+		    #{free_board_no},
+		    #{member_no},
+		    #{content},
+		    SYSDATE
+		)		
+	</insert>
+	
+	<select id="getFreeBoardReplyList" resultType="com.ja.shape.vo.FreeBoardReplyVo">
+	  select * from free_board_reply ORDER BY no DESC
+	</select>
+	
+	<select id="getFreeBoardReplyByNo" resultType="com.ja.shape.vo.FreeBoardReplyVo">
+	   select * from free_board_reply WHERE free_board_no=#{no}
+	</select>
+	
+	<delete id="deleteReplyByNo">
+	  delete from free_board_reply where no=#{no}
+	</delete>
+	
+	<select id="getMyFreeBoardReplyVoByNo" resultType="com.ja.shape.vo.FreeBoardReplyVo">
+	   select * from free_board_reply where no=#{no}
+	</select>
+	
+	<update id="updateReply">
+	  update free_board_reply
+	  set content=#{content}
+	  where no=#{no} 
+    </update>
+    
+   <select id="totalReplyCount" resultType="int">
+      select count(*) from free_board_reply where free_board_no = #{freeBoardNo}
+    </select>
+    
+    <!-- 댓글신고 -->
+    <insert id="replyWarning">
+    INSERT INTO Free_Board_Reply_Warning VALUES(
+         free_board_reply_warning_seq.nextval,
+		    #{free_board_reply_no},
+		    #{member_no},
+		    #{content},
+		    SYSDATE
+	)
+    </insert>
+    
+    
+   <!--  -->
+    
+</mapper>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.wish.mapper.WishRESTSQLMapper">
+	
+	
+	<!-- Reliability 관련... -->
+	<!-- wish_reliability 생성하기 -->
+	<insert id="insertReliabilityByVo">
+		insert into wish_reliability values(
+		    WISH_RELIABILITY_SEQ.nextval,
+		    #{member_no},
+		    #{wish_run_no},
+		    #{good_bad},
+		    SYSDATE
+		)
+	</insert>
+	<!-- Reliability 지우기 -->
+	<delete id="deleteReliabilityByVo">
+		delete from wish_reliability
+		where member_no = #{member_no}
+	</delete>
+	<!-- vo로 Reliability 수정하기 -->
+	<update id="updateReliabilityByVo">
+		update wish_reliability 
+		set good_bad = #{good_bad}
+		where member_no = #{member_no}
+	</update>
+	<!-- wish_run_no로 Reliability 불러오기 -->
+	<select id="selectCountReliabilityByVo" resultType="int">
+		select count(no) from wish_reliability 
+		where wish_run_no = #{wish_run_no}
+		and good_bad = #{good_bad}
+	</select>
+	<!-- member_no로 내 Reliability 체크 확인하기.  -->
+	<select id="selectMyReliabilityByMemberNo" resultType="com.ja.shape.vo.WishReliabilityVo">
+		select * from wish_reliability
+		where member_no = #{member_no}
+	</select>
+	
+	
+	
+	
+	<!-- wish_run_reply 관련... -->
+	<!-- wish_run_reply 생성하기 -->
+	<insert id="insertWishRunReplyByVo">
+		insert into wish_run_reply values(
+		    wish_run_reply_seq.nextval,
+		    #{member_no},
+		    #{wish_run_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- wish_run_no로 wish_run_reply 불러오기 -->
+	<select id="selectWishRunReplyByRunNo" resultType="com.ja.shape.vo.WishRunReplyVo">
+		select * from wish_run_reply
+		where wish_run_no = #{wish_run_no}
+		order by write_date
+	</select>
+	<!-- no로 wish_run_reply 삭제하기 -->
+	<delete id="deleteWishRunReplyByNo">
+		delete from wish_run_reply
+		where no = #{no}
+	</delete>
+	<!-- wish_run_reply 수정하기 -->
+	<update id="updateWishRunReplyByVo">
+		update wish_run_reply 
+		set content = #{content}
+		where no = #{no}
+	</update>
+	
+	
+	
+	
+	<!-- wish_run_reply_warning 관련... -->
+	<!-- wish_run_reply_warning 생성하기 -->
+	<insert id="insertWishRunReplyWarningByVo">
+		insert into wish_run_reply_warning values(
+		    wish_run_reply_warning_seq.nextval,
+		    #{member_no},
+		    #{wish_run_reply_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- Vo로 wish_run_reply_warning 불러오기 -->
+	<select id="selectRunReplyWarningByVo" resultType="com.ja.shape.vo.WishRunReplyWarningVo">
+		select * from wish_run_reply_warning
+		where member_no = #{member_no}
+		and wish_run_reply_no = #{wish_run_reply_no}
+	</select>
+	
+	
+	
+	
+	<!-- 로그인한 member_no로  todoRunDate 구하기 -->
+	<select id="selectWishRunByMemberNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run 
+		where member_no = #{memeber_no}
+	</select>
+	<!--  -->
+	<select id="selectTodoRunByWishRunNo" resultType="java.util.Date">
+		select todo_day from todo_run
+		where wish_run_no = #{wish_run_no}
+	</select>
+	
+	
+	
+	
+	<!-- 일지 관련.... -->
+	<!-- wish_run_comment 생성하기. -->
+	<insert id="insertWishRunCommentByVo">
+		insert into wish_run_comment values(
+		    wish_run_comment_seq.nextval,
+		    #{wish_run_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- wish_run 불러오기. -->
+	<select id="selectWishRunByDay" resultType="com.ja.shape.vo.WishRunVo">
+		select distinct * from wish_run
+		where no in (
+			select wish_run_no from todo_run
+			WHERE TO_CHAR(todo_day , 'yyyy-MM-dd') = #{todo_day}
+			and member_no = #{member_no}
+		)
+	</select>
+	<!-- wish 불러오기. -->
+	<select id="selectWishByNo" resultType="com.ja.shape.vo.WishVo">
+		select * from wish
+		where no = #{wish_no} 
+	</select>
+	<!-- wish_run_comment 불러오기. -->
+	<select id="selectWishRunCommentByWishRunNo" resultType="com.ja.shape.vo.WishRunCommentVo"> 
+		select * from wish_run_comment
+		where wish_run_no = #{wish_run_no}
+		and TO_CHAR(write_date,'yyyy-MM-dd') = #{todo_day}
+	</select>
+	<!-- wish_run_comment 수정하기. -->
+	<update id="updateWishRunCommentByVo">
+		update wish_run_comment set 
+		content = #{content}
+		where no = #{no}
+	</update>
+	<!-- wish_run_image 생성하기. -->
+	<insert id="insertWishRunImageByVo">
+		insert into wish_run_image values(
+		    WISH_RUN_IMAGE_SEQ.nextval,
+		    #{wish_run_no},
+		    #{file_name},
+		    #{file_link},
+		    sysdate
+		)
+	</insert>
+	<!-- wish_run_image 불러오기. -->
+	<select id="selectWishRunImageByTodoDay" resultType="com.ja.shape.vo.WishRunImageVo">
+		select * from wish_run_image
+			where wish_run_no in (
+			select tr.wish_run_no from wish_run wr, todo_run tr
+			where wr.no = tr.wish_run_no
+			and to_char(todo_day, 'yyyy-MM-dd') = #{todo_day}
+			and to_char(upload_date, 'yyyy-MM-dd') = #{todo_day}
+		)
+	</select>
+	
+	
+	
+	<!-- index페이지 관련.. -->
+	<!-- 실행하고 있는 위시 랭킹3. -->
+	<select id="selectRunningWishRank" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select wr.wish_no, count(wr.wish_no) from wish w, wish_run wr
+		            where w.no = wr.wish_no
+		            group by wr.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish
+		where w2.wish_no = wish.no
+		and r between 1 and 3
+		order by r
+	</select>
+	<!-- 좋아요 많은 위시 불러오기. -->
+	<select id="selectLikeWishRank" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select wl.wish_no, count(wl.wish_no) from wish w, wish_like wl
+		            where w.no = wl.wish_no
+		            group by wl.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish
+		where w2.wish_no = wish.no
+		and r between 1 and 3
+		order by r
+	</select>
+	<!-- 조회수가 많은 위시 불러오기. -->
+	<select id="selectReadCountWishRank" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select * from wish
+		            order by read_count desc
+		        ) w1
+		    ) w2, wish
+		where w2.no = wish.no
+		and r between 1 and 3
+		order by wish.read_count desc
+	</select>
+	<!-- 포기한 사람이 많은 위시 불러오기 -->
+	<select id="selectQuitWishRank" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select wr.wish_no, count(wr.wish_no) from wish w, wish_run wr
+		            where w.no = wr.wish_no
+		            and wr.quit_date is not null
+		            group by wr.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish
+		where w2.wish_no = wish.no
+		and r between 1 and 3
+		order by r
+	</select>
+	<!-- 위시에 투두 불러오기. -->
+	<select id="selectTodoByWishNo" resultType="com.ja.shape.vo.TodoVo">
+		select * from todo	
+		where wish_no = #{wish_no}
+	</select>
+	<!-- 위시에 작성자 불러오기. -->
+	<select id="selectMemberByNo" resultType="com.ja.shape.vo.MemberVo">
+		select * from member
+		where no = #{member_no}
+	</select>
+	<!-- 카테고리별 실행하는 사람 수 랭킹 wish 3개 불러오기. -->
+	<select id="selectRunningWishRankBySmallCategoryNo" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select wr.wish_no, count(wr.wish_no) from wish w, wish_run wr
+		            where w.no = wr.wish_no
+		            and w.small_category_no = #{small_category_no}
+		            group by wr.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish
+		where w2.wish_no = wish.no
+		and r between 1 and 3
+		order by r
+	</select>
+	<!-- 카테고리별 좋아요 랭킹 wish 3개 불러오기. -->
+	<select id="selectLikeWishRankBySmallCategoryNo" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select wl.wish_no, count(wl.wish_no) from wish w, wish_like wl
+		            where w.no = wl.wish_no
+		            and w.small_category_no = #{small_category_no}
+		            group by wl.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish
+		where w2.wish_no = wish.no
+		and r between 1 and 3
+		order by r
+	</select>
+	<!-- 카테고리별 조회수 랭킹 wish 3개 불러오기. -->
+	<select id="selectReadCountWishRankBySmallCategoryNo" resultType="com.ja.shape.vo.WishVo">
+		select wish.* from (select rownum r, w1.* from (
+		            select * from wish
+		            where small_category_no = #{small_category_no}
+		            order by read_count desc
+		        ) w1
+		    ) w2, wish
+		where w2.no = wish.no
+		and r between 1 and 3
+		order by wish.read_count desc
+	</select>
+	<!-- 카테고리별 포기 랭킹 wish 3개 불러오기 -->
+	<select id="selectQuitWishRankBySmallCategoryNo" resultType="com.ja.shape.vo.WishVo">
+		select w3.* from (select rownum r, w1.* from (
+		            select wr.wish_no, count(wr.wish_no) from wish w, wish_run wr
+		            where w.no = wr.wish_no
+		            and wr.quit_date is not null
+		            and w.small_category_no = #{small_category_no}
+		            group by wr.wish_no
+		            order by count(w.no) desc
+		        ) w1
+		    ) w2, wish w3
+		where w2.wish_no = w3.no
+		and w2.r between 1 and 3
+		order by w2.r
+	</select>
+	
+	
+	
+	
+	<!-- readWishRun 페이지 위시 런 후기 관련.. -->
+	<!-- 위시 런 후기 pk 생성하기 -->
+	<select id="selectWishRunEpiloguePK" resultType="int">
+		select WISH_RUN_EPILOGUE_SEQ.nextval from dual
+	</select>
+	<!-- 위시 런 후기 생성하기. -->
+	<insert id="insertWishRunEpilogueByVo">
+		insert into wish_run_epilogue values(
+		    #{no},
+		    #{wish_run_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- 위시 런 후기 위치 생성하기. -->
+	<insert id="insertWishRunEpiloguePlaceByVo">
+		insert into wish_run_epilogue_place values(
+		    WISH_RUN_EPILOGUE_PLACE_SEQ.nextval,
+		    #{wish_run_epilogue_no},
+		    #{address},
+		    sysdate
+		)
+	</insert>
+	<!-- 위시 런 후기 불러오기 -->
+	<select id="selectWishRunEpilogueByNo" resultType="com.ja.shape.vo.WishRunEpilogueVo">
+		select * from wish_run_epilogue
+		where wish_run_no = #{wish_run_no}
+	</select>
+	<!-- 위시 런 후기 위치 불러오기 -->
+	<select id="selectWishRunEpiloguePlaceByEpilogueNo" resultType="com.ja.shape.vo.WishRunEpiloguePlaceVo">
+		select * from wish_run_epilogue_place
+		where wish_run_epilogue_no = #{wish_run_epilogue_no}
+	</select>
+	<!-- 위시 런 후기 수정하기 -->
+	<update id="updateWishRunEpilogueByVo">
+		update wish_run_epilogue set content = #{content}
+		where wish_run_no = #{wish_run_no}
+	</update>
+	<!-- 위시 런 후기 장소 수정하기 -->
+	<update id="updateWishRunEpiloguePlaceByVo">
+		update wish_run_epilogue_place set address = #{address}
+		where wish_run_epilogue_no = #{wish_run_epilogue_no}
+	</update>
+	
+	
+	<!-- 그래프 관련.. -->
+	<!-- 위시 실행하는 사람 성별 그래프 -->
+	<select id="selectWishJoinByNo" resultType="java.util.Map">
+		SELECT mm.gender , COUNT(*) AS cnt FROM Wish ww , wish_run wr , member mm
+		WHERE ww.no = wr.wish_no 
+		AND mm.no = wr.member_no
+		AND ww.no = #{wish_no}
+		GROUP BY mm.gender
+	</select>
+	<!-- wish_no로 전체 투두 실행 여부 가져오기 -->
+	<select id="selectTodoRunGraphByWishNo" resultType="java.util.Map">
+		select tr."check", count(tr."check") as cnt from todo td, todo_run tr
+		where td.no = tr.todo_no
+		and tr.wish_run_no in ( 
+		        select no from wish_run
+		        where wish_no = #{wish_no}
+		    )
+		and to_char(tr.todo_day, 'yyyy-MM-dd') <![CDATA[<=]]> to_char(sysdate, 'yyyy-MM-dd')
+		group by tr."check"
+	</select>
+	<!-- wish_no로 날짜별 좋아요 가져오기-->
+	<select id="selectWishLikeGraphByWishNo" resultType="java.util.Map">
+		select TO_CHAR(click_date, 'yyyy-MM-dd') as like_date, count(*) cnt from wish_like
+		where wish_no = #{wish_no}
+		and to_char(click_date, 'yyyy-MM-dd') <![CDATA[<=]]> to_char(sysdate, 'yyyy-MM-dd')
+		group by TO_CHAR(click_date, 'yyyy-MM-dd')
+		order by TO_CHAR(click_date, 'yyyy-MM-dd')
+	</select>
+	<!-- wish_no로 날짜별 포기 wish 가져오기 -->
+	<select id="selectQuitWishGraphByWishNo" resultType="java.util.Map">
+		select to_char(quit_date, 'yyyy-MM-dd') as quit_day, count(*) as cnt  from wish w, wish_run wr
+		where w.no = wr.wish_no
+		and wish_no = #{wish_no}
+		group by to_char(wr.quit_date, 'yyyy-MM-dd')
+		having to_char(wr.quit_date, 'yyyy-MM-dd') is not null
+	</select>
+	
+	
+	<!-- 좋아요 관련.... -->
+	<!-- wish_like 생성하기 -->
+	<insert id="insertWishLikeByVo">
+		insert into wish_like values(
+		    wish_like_seq.nextval,
+		    #{member_no},
+		    #{wish_no},
+		    SYSDATE
+		)
+	</insert>
+	<!-- wish_like 제거하기 -->
+	<delete id="deleteWishLikeByVo">
+		delete from wish_like 
+		where wish_no = #{wish_no}
+		and member_no = #{member_no}
+	</delete>
+	<!-- wish_like 내거 확인하기 -->
+	<select id="selectMyWishLikeByVo" resultType="int">
+		select count(*) from wish_like
+		where wish_no = #{wish_no}
+		and member_no = #{member_no}
+	</select>
+	<!-- wish_like 좋아요 수 불러오기 -->
+	<select id="selectWishLikeCountByWishNo" resultType="int">
+		select count(*) from wish_like
+		where wish_no = #{wish_no}
+	</select>
+	
+	
+	
+	
+	<!-- 위시 댓글 관련... -->
+	<!-- 위시 댓글 생성하기 -->
+	<insert id="insertWishReplyByVo">
+		insert into wish_reply values(
+		    wish_reply_seq.nextval,
+		    #{member_no},
+		    #{wish_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- 위시 댓글 불러오기 -->
+	<select id="selectWishReplyByWishNo" resultType="com.ja.shape.vo.WishReplyVo">
+		select * from wish_reply
+		where wish_no = #{wish_no}
+		order by write_date
+	</select>
+	<!-- 위시 댓글 삭제하기 -->
+	<delete id="deleteWishReplyByNo">
+		delete wish_reply
+		where no = #{no}
+	</delete>
+	<!-- 위시 댓글 수정하기 -->
+	<update id="updateWishReplyByVo">
+		update wish_reply 
+		set content = #{content}
+		where no = #{no}
+	</update>
+	
+	
+	
+	
+	<!-- wish_reply_warning 관련... -->
+	<!-- 신고 한적이 있는지 확인하기. -->
+	<select id="selectWishReplyWarningByVo" resultType="com.ja.shape.vo.WishReplyWarnigVo">
+		select * from wish_reply_warning
+		where member_no = #{member_no}
+		and wish_reply_no = #{wish_reply_no}
+	</select>	
+	<!-- wish_run_reply_warning 생성하기 -->
+	<insert id="insertWishReplyWarningByVo">
+		insert into wish_reply_warning values(
+		    wish_reply_warning_seq.nextval,
+		    #{member_no},
+		    #{wish_reply_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	
+	
+	
+	
+	
+	<!-- other wish 페이지 관련 -->
+	
+	<!-- big category 불러오기 -->
+	<select id="getBigcategoryForOtherWish" resultType="com.ja.shape.vo.BigCategoryVo">
+		select * from big_category order by no
+	</select>
+	<!-- small_category 불러오기 -->
+	<select id="getAllSmallCategoryForOtherWish" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * from small_category order by no
+	</select>
+	<!-- big_category_no로 small_category 불러오기 -->
+	<select id="getSmallCatrgoryByBigNoForOtherWish" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * from small_category
+		where big_category_no = #{big_category_no}
+	</select>
+	
+	
+	
+	<!-- 검색 옵션 - 아이디  + 소분류 정렬-->
+	<select id="getOtherWishSelectOptionIDAndSmallCategory" resultType="com.ja.shape.vo.WishVo">
+		select w.* from (
+		    select ii.* from wish ii , member m where m.no = ii.member_no AND m.id like '%' || #{searchString} || '%'
+		)  w 
+		where (w.member_no in(
+		        SELECT ff.member_no FROM friends_group fg , friends ff
+		        WHERE fg.no = ff.friends_group_no
+		        AND fg.member_no = #{member_no}
+		        ) 
+		        and w.access_option = 'onlyfriends'
+		      )
+		     or (w.member_no != #{member_no} and access_option = 'public')
+		    AND (
+				    select count(*) from wish_run r WHERE r.wish_no = w.no
+				) >= 1 order by (case when small_category_no = #{small_category_no} then 1 else 2 end)	
+	</select>	
+	
+	<!-- 검색 옵션 - 주제  + 소분류 정렬-->
+	<select id="getOtherWishSelectOptionTitleAndSmallCategory" resultType="com.ja.shape.vo.WishVo">
+		select * from wish w
+		where (w.member_no in(
+	        SELECT ff.member_no FROM friends_group fg , friends ff
+	        WHERE fg.no = ff.friends_group_no
+	        AND fg.member_no = #{member_no}
+	        ) 
+	        and access_option = 'onlyfriends'
+	      )
+	     or (w.member_no != #{member_no} and access_option = 'public')
+	    AND w.title like '%'||#{searchString}||'%'
+	    AND (
+			    select count(*) from wish_run r WHERE r.wish_no = w.no
+			) >= 1 order by (case when small_category_no = #{small_category_no} then 1 else 2 end)
+	</select>	
+	
+	
+	
+	
+	
+	
+</mapper>
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  

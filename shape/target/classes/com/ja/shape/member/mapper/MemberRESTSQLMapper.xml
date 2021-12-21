@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.member.mapper.MemberRESTSQLMapper">
+	
+	<!-- 카테고리 관련.. -->
+	<!-- 모든 small_category 불러오기 -->
+	<select id="selectAllSmallCategory" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * from small_category order by no
+	</select>
+	<!-- big_category_no로 small_category 불러오기 -->
+	<select id="selectSmallCatrgoryByBigNo" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * from small_category
+		where big_category_no = #{big_category_no}
+	</select>
+	
+	
+	
+	<!-- Reply 관련 -->
+	<select id="selectMemberByNo" resultType="com.ja.shape.vo.MemberVo">
+		select * from member
+		where no = #{member_no}
+	</select>
+	
+	
+	
+	<!-- 로그인 페이지 관련.. -->
+	<!-- id pw로 로그인하기. -->
+	<select id="selectMemberByIdAndPw" resultType="com.ja.shape.vo.MemberVo">
+		select * from member
+		where id = #{id}
+		and pw = #{pw}
+	</select>
+	
+	
+	
+	<!-- 회원가입 페이지 관련.. -->
+	<!-- id 중복확인하기. -->
+	<select id="selectMemberById" resultType="com.ja.shape.vo.MemberVo"> 
+		select * from member
+		where id = #{id}
+	</select>
+	
+	
+	
+	
+	<!-- 친구 추가 관련... -->
+	<!-- 내 기본 friends_group 불러오기 -->
+	<select id="selectMyFriendsGroupNoByMemberNo" resultType="int">
+		select no from friends_group
+		where member_no = #{member_no}
+		and name = '기본그룹'
+	</select>
+	<!-- 친구 추가하기. -->
+	<insert id="insertFriendsByVo">
+		insert into friends values(
+		    FRIENDS_SEQ.nextval,
+		    #{friends_group_no},
+		    #{member_no},
+		    #{content},
+		    sysdate
+		)
+	</insert>
+	<!-- 내 친구 확인하기 -->
+	<select id="selectMyFriendsMemberNo" resultType="int">
+		select member_no from friends
+		where friends_group_no in(
+		    select no from friends_group
+		    where member_no = #{member_no}
+		)
+	</select>
+	
+	
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+	

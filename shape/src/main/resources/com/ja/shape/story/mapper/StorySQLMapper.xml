@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.story.mapper.StorySQLMapper">
+	<!-- 스토리 작성 -->
+	<insert id="writeStoryByVo">
+		INSERT INTO story VALUES(
+			story_seq.nextval,
+		   #{member_no},
+		   #{content},
+		   #{image_file_name , jdbcType=VARCHAR},
+		   #{image_file_link, jdbcType=VARCHAR},
+		  	sysdate
+		)
+	</insert>
+
+	<!-- 스토리 리스트 불러오기 -->
+	<select id="getStoryList" resultType="com.ja.shape.vo.StoryVo">
+		SELECT * FROM story ORDER BY no DESC
+	</select>
+	
+	<!--스토리 불러오기  -->
+	<select id="getStoryByNo" resultType="com.ja.shape.vo.StoryVo">
+		SELECT * FROM story WHERE no = #{no}
+	</select>
+	
+	<!-- 스토리 이미지 불러오기 -->
+	<select id="getImageFileLinkByNo" resultType="com.ja.shape.vo.StoryVo" >
+	    SELECT image_file_link FROM story WHERE no = #{no}
+	</select>
+	
+	 <!-- 스토리 좋아요 -->
+    <insert id="storyLike">
+	 insert into story_like values(
+	    story_like_seq.nextval,
+	    #{story_no},
+	    #{member_no},
+	    SYSDATE
+	 )
+	</insert>
+
+    <!-- 스토리 좋아요 취소 -->
+    <delete id="storyUnlike">
+      delete from story_like
+      where member_no = #{member_no} and story_no = #{story_no}
+    </delete>
+    
+    <!-- 내가 스토리에 좋아요를 누른것 -->
+    <select id="myStoryLikeCount" resultType="int">
+       select count(*) from story_like
+       where member_no =#{member_no} and story_no = #{story_no}
+    </select>
+    
+    <!-- 스토리 전체좋아요개수 -->
+    <select id="totalStoryLikeCount" resultType="int">
+       select count(*) from story_like
+       where story_no = #{story_no}
+    </select>
+
+   <!-- 스토리 댓글달기 -->
+   <insert id="writeStoryReplyByVo">
+		INSERT INTO Story_Reply VALUES(
+		    story_reply_seq.nextval,
+		    #{story_no},
+		    #{member_no},
+		    #{content},
+		    SYSDATE
+		)		
+	</insert>
+	
+	 <!-- 스토리 댓글 리스트로 불러오기 -->
+	<select id="getStoryReplyList" resultType="com.ja.shape.vo.StoryReplyVo">
+	  select * from story_reply ORDER BY no DESC
+	</select>
+	
+	 <!-- 스토리 댓글 번호로 불러오기 -->
+	<select id="getStoryReplyByNo" resultType="com.ja.shape.vo.StoryReplyVo">
+	   select * from story_reply WHERE story_no=#{story_no}
+	</select>
+
+	<!-- 스토리 삭제/ 밑 댓글 삭제와 같이 감 -->
+	<delete id="deleteStoryByNo">
+		DELETE FROM story WHERE no = #{no}
+	</delete>
+
+	<!-- 스토리와 같이 삭제되는 댓글 -->
+	<delete id="deleteStoryReplyWithStory">
+		DELETE FROM story_reply WHERE story_no = #{story_no}
+	</delete>
+
+	<!-- 스토리 댓글 삭제 -->
+	<delete id="deleteStoryReplyByNo">
+		DELETE FROM story_reply WHERE no = #{no}
+	</delete>
+
+	<!-- 스토리 수정 -->
+	<update id="updateStoryByNo">
+		UPDATE story
+		SET content = #{content}
+		WHERE no = #{no}
+	</update>
+
+   
+	<!-- 스토리 이미지 첨부 여부 -->
+	<select id="countStoryImage" resultType="int">
+		SELECT COUNT(image_file_link) FROM story WHERE no = #{no}
+	</select>
+	
+	
+	<!-- 프로필 페이지 스토리 리스트 -->
+	<select id="getProfileStoryListByNo" resultType="com.ja.shape.vo.StoryVo">
+		SELECT * FROM story
+		WHERE member_no = #{member_no} 
+		ORDER BY no DESC
+	</select>
+	
+	<!-- 회원가입시 기본 Friends Group 추가하기 -->
+	<insert id="insertFriendsGroupByNo">
+		insert into friends_group values(
+		    FRIENDS_GROUP_SEQ.nextval,
+		    #{member_no},
+		   	'기본그룹',
+		   	'기본'
+		   	)
+	</insert>
+	
+	
+	<!--위시 리스트 로그인한 본인의 친구의 위시 or public 위시만 뜨게   -->
+	<select id="getWishListInStoryByNo" resultType="com.ja.shape.vo.WishVo">
+		SELECT * FROM Wish w1
+		WHERE w1.member_no = #{member_no}
+		AND (w1.access_option = 'public' 
+		OR (
+		    w1.access_option = 'onlyfriends' AND 
+		    EXISTS (
+		        SELECT * FROM friends_group fg , friends ff
+		        WHERE fg.no = ff.friends_group_no
+		        AND fg.member_no = #{user_no}
+		        AND ff.member_no = #{member_no}
+		        )
+		    )
+		)
+	</select>
+
+	
+
+
+
+</mapper>

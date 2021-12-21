@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.member.mapper.MemberSQLMapper">
+	
+	
+	
+	<!-- 메인 페이지에 보드랑 연결용! 멤버 번호로 멤버 호출 -->
+	<select id="getMemberByNo" resultType="com.ja.shape.vo.MemberVo">
+		SELECT * FROM member WHERE no = #{no}
+	</select>	
+	
+	
+	
+	<!-- 로그인하기 -->
+	<select id="selectMemberByVo" resultType="com.ja.shape.vo.MemberVo">
+		select *
+		from member
+		where id = #{id} and pw = #{pw}
+	</select>
+	
+	
+	
+	
+	<!-- Member 추가하기. -->
+	<insert id="insertMemberByVo">
+		insert into member values(
+		    #{no},
+		    #{id},
+		    #{pw},
+		    #{name},
+		    #{phone},
+		    #{email},
+		    #{gender},
+		    #{birth},
+		    sysdate
+		)
+	</insert>
+	
+	
+	<!-- member_category 추가하기 -->
+	<insert id="insertMemberCategoryByVo">
+		insert into member_category values(
+		    MEMBER_CATEGORY_SEQ.nextval,
+		    #{member_no},
+		    #{small_category_no}
+   		)
+	</insert>	
+	
+	
+	
+	<!-- big_category 불러오기 -->
+	<select id="selectBigCategory" resultType="com.ja.shape.vo.BigCategoryVo">
+		select * 
+		from big_category 
+		order by no
+	</select>
+	
+	<!-- small_category 불러오기 -->
+	<select id="selectSmallCategory" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * 
+		from small_category 
+		order by no
+	</select>
+	
+	<!-- 로그인 한 회원의 회원 번호 알아오기 -->
+	<select id="getMemberNoById" resultType="com.ja.shape.vo.MemberVo">
+		select no from member WHERE id = #{id}
+	</select>
+	
+	
+	
+	
+	
+	<select id="createMemberPK" resultType="int">
+		SELECT member_seq.nextval FROM Dual
+	</select>
+	
+	<!-- 내 friends_group 에 있는 friends 보기   -->
+	<select id="selectFriendsByFriendsGroupNo" resultType="com.ja.shape.vo.FriendsVo">
+		select * from friends where friends_group_no = #{friends_group_no}
+	</select>
+	
+	<!-- 내 친구 -->
+	<select id="selectFriendsByNo" resultType="com.ja.shape.vo.FriendsVo">
+		select * from friends where no = #{no}
+	</select>
+	<!-- 내친구 friends group 모아보기 -->
+	<select id="selectFriendsGroupByNo" resultType="com.ja.shape.vo.FriendsGroupVo">
+		select * from friends_group where member_no = #{member_no} order by no
+	</select>
+	
+
+	
+
+
+	
+
+	<!-- Friends 추가하기 -->
+	<insert id="insertFriendsByVo">
+		insert into friends values(
+	  	  	friends_seq.nextval,
+		    #{friends_group_no},
+		    #{member_no},
+		    #{content},
+		    sysdate
+		 )
+	</insert>
+	<!-- 회원가입시 기본 Friends Group 추가하기 -->
+	<insert id="insertFriendsGroupByNo">
+		insert into friends_group values(
+		    FRIENDS_GROUP_SEQ.nextval,
+		    #{member_no},
+		   	'기본그룹',
+		   	'기본'
+		)
+	</insert>
+	<!-- Friends Group 추가할때 -->
+	<insert id="insertFriendsGroupByVo">
+		insert into friends_group values(
+		    FRIENDS_GROUP_SEQ.nextval,
+		    #{member_no},
+		   	#{name},
+		   	#{content}
+		)
+	</insert>
+
+		
+	
+	<!-- 친구 추가 멤버에서 리스트 뽑기 (추가했던 친구들을 제외하고 출력)-->
+	<select id="selectMember" resultType="com.ja.shape.vo.MemberVo">
+		SELECT * FROM(
+		   	 select * from
+		   	 member
+		    where no not in(
+		    select f.member_no from
+		    friends f, friends_group g where g.no = f.friends_group_no
+		    and g.member_no = #{member_no})) t1
+		<choose>
+			<when test="searchWord != null">
+				where t1.id like '%' || #{searchWord} || '%'
+				and rownum between 1 and 10
+			</when>
+			<otherwise>
+				where rownum between 1 and 10
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 친구 삭제 -->
+	<delete id="deleteFriendsByNo">
+		DELETE FROM friends WHERE member_no = #{member_no}
+	</delete>
+	
+	<!-- 그룹명 변경 -->
+	<update id="updateFriendsGroupByVo"> 
+			UPDATE friends_group
+			SET name = #{name},
+			content = #{content}
+			WHERE no = #{no}
+	
+ 	</update> 
+ 	
+ 	<!-- 친구 이동 -->
+ 	<update id="updateFriendsMoveByVo">
+ 		update friends
+		set friends_group_no = #{friends_group_no},content = #{content} where no = #{no}
+ 	</update>
+ 	
+ 	<!-- 친구 그룹 삭제 -->
+ 	<delete id="deleteFriendsGroupByno">
+ 		delete from friends_group where no = #{no}
+ 	</delete>
+	
+	<!-- 친구이동 byNo -->
+	<update id="updateFriendsMoveByFriendsGroupVo">
+		update friends
+		set friends_group_no = #{friends_group_no} where friends_group_no= #{no}
+	</update>
+	
+	<!-- 친구 그룹이동 update where no 받는 select -->
+	<select id="selectFriendsMoveByMemberNo" resultType="int">
+		select no from friends_group where member_no = #{member_no}
+		and name='기본그룹'
+	</select>	
+	
+	<select id="selectSmallCategoryByMemberNo" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select sc.* from member_category mc, small_category sc
+		where mc.small_category_no = sc.no
+		and mc.member_no = #{member_no}
+	</select>
+	
+	<select id="selectBigCategoryByNo" resultType="com.ja.shape.vo.BigCategoryVo">
+		select * from big_category where no = #{no}
+	</select>
+	
+	
+	
+	
+	
+	<!-- 메시지xml -->
+	
+	<!-- 메시지 insert -->
+	<!-- Message 추가하기 -->
+	<insert id="insertMessageByVo">
+		insert into message values(
+		    MESSAGE_SEQ.nextval,
+		    #{from_member_no},
+		    #{to_member_no},
+		    #{content},
+		    'n',
+		    'n',
+		    sysdate    
+		)
+	</insert>
+			<!-- 메시지 보낼대상 리스트들 -->
+	<select id="selectMemberOrderByNo" resultType="com.ja.shape.vo.MemberVo">
+		select *
+		from
+		(select rownum rnum, a.* from
+		(select * from member order by member.no)a
+		<if test="searchWord != null">
+		where id like '%' || #{searchWord} || '%'
+		</if>
+		)
+		<![CDATA[
+		where rnum >= (#{pageNum}-1)*10+1 AND rnum <= #{pageNum}*10
+		]]>  
+		
+		
+	</select>
+	 <!-- 메시지 페이징 -->
+	<select id="selectMemberTotalCount" resultType="int">
+		select count(*) from member
+		<if test="searchWord != null">
+			where id like '%' || #{searchWord} || '%'
+		</if>
+	</select>
+	
+
+	<!-- 메시지 안읽은것(n)이 우선적으로 표시 -->
+	<select id="getMessageByToNo" resultType="com.ja.shape.vo.MessageVo">
+		select * from message where to_member_no = #{to_member_no} order by read_check 
+	</select>
+	<!--  -->
+	<select id="getMessageByFromNo" resultType="com.ja.shape.vo.MessageVo">
+		select * from message where from_member_no = #{from_member_no}
+	</select>
+	
+	<select id="getMessageReadCheckByToNo" resultType="int">
+		select count(*) from message where to_member_no=#{to_member_no} and read_check = 'n'
+	</select>
+	
+	<update id="updateReadCheckMessage">
+		update message set read_check = 'y' where to_member_no = #{to_member_no}
+	</update>
+	
+	<update id="updateDeleteCheckMessage">
+		update message set delete_check = 'y' where no = #{no} 
+	</update>
+	<!-- member id 로검색 -->
+	<select id="getIdByMemberVo" resultType="com.ja.shape.vo.MemberVo">
+	select * from member where id = #{id}
+	</select>
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+	

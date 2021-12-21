@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ 	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ja.shape.wish.mapper.WishSQLMapper">
+
+	<!-- 위시 만들어서 인서트 -->
+	<insert id="makeAWish">
+		INSERT INTO wish VALUES(
+		    WISH_SEQ.nextval,
+		    #{member_no},
+		    #{small_category_no},
+		    #{title},
+		    #{content},
+		    #{access_option},
+		    #{plan_check},
+		    0,
+		    SYSDATE
+		)	
+	</insert>
+	
+	
+	<!-- 실행하지 않은 위시들만 가져오기 -->
+	<select id="getWishList" resultType="com.ja.shape.vo.WishVo">
+		<![CDATA[
+		select * from wish w 
+		where member_no = #{member_no}
+		AND (
+		    select count(*) from wish_run r WHERE r.wish_no = w.no
+		) < 1 order by no desc
+		]]>
+	</select>
+		
+	<select id="getToDoList" resultType="com.ja.shape.vo.TodoVo">
+	SELECT * FROM todo 
+	WHERE wish_no = #{wish_no}
+	</select>	
+
+	<select id="getWishByWishNo" resultType="com.ja.shape.vo.WishVo">
+		SELECT * 
+		FROM wish 
+		where no = #{wish_no}
+	</select>
+			
+	<!--todo 만들어서 인서트 -->
+	<insert id="insertToDo">
+		INSERT INTO todo
+		 VALUES(
+			TODO_SEQ.nextval,
+			#{wish_no},	
+			#{title},
+			#{content}
+		)
+	</insert>
+	
+	<!-- plan check를 Y로 업데이트 하기 -->
+	<update id="updatePlanCheck">
+		UPDATE WISH 
+		SET plan_check = 'Y'
+		WHERE no = #{wishNo}
+	</update>
+	
+	<!-- 위시 삭제 쿼리 -->
+	<delete id="deleteWish">
+		DELETE FROM WISH
+		WHERE no = #{no}
+	</delete>
+	
+	<!-- 위시 수정 쿼리 -->
+	<update id="updateWish">
+		UPDATE WISH 
+		SET small_category_no = #{small_category_no},
+    	title = #{title},
+    	content = #{content},
+    	access_option = #{access_option},
+    	write_Date = SYSDATE
+		WHERE no = #{no}
+	</update>
+	
+	<!-- 투두 수정 쿼리 -->
+	<update id="updateToDo">
+		UPDATE todo
+    	SET title = #{title},
+        	content = #{content}
+		WHERE no = #{no}
+	</update>
+	
+	
+	<!-- 조회수 하나 증가 쿼리 -->
+	<update id="addReadCount">
+		update wish
+		set read_count = read_count+1
+		where no = #{wish_no}
+	</update>
+	
+	
+	<!-- wish_reply(위시 퍼가기 댓글 인서트) -->
+	<insert id="insertReply">
+		INSERT INTO wish_reply VALUES(
+   		 	WISH_REPLY_SEQ.nextval,
+	    	#{member_no},
+	    	#{wish_no},
+	    	#{content},
+	  	    SYSDATE
+		)
+	</insert>
+
+	
+	<!-- 위시no로 댓글들 가져오기 -->
+	<select id="getReplyByWishNo" resultType="com.ja.shape.vo.WishReplyVo">
+		select * from wish_reply
+		WHERE wish_no = #{wish_no}
+	</select>
+	
+	<!-- member_no로 회원의 아이디 알아오기 -->
+	<select id="getMemberIDByMemberNo" resultType="java.lang.String">
+		SELECT id from member
+		where no = #{member_no}
+	</select>
+	
+	<!-- member_no로 회원의 아이디 알아오기 -->
+	<select id="getIDByMemberNo" resultType="com.ja.shape.vo.MemberVo">
+		SELECT id from member
+		where no = #{member_no}
+	</select>
+	
+	
+	
+	
+	
+	<!-- 댓글 신고 인서트 -->
+	<insert id="replyReport">
+		insert into wish_reply_warning VALUES(
+		  WISH_REPLY_WARNING_SEQ.nextval,
+		  #{member_no},
+		  #{wish_reply_no},
+		  #{content},
+		  SYSDATE
+		)	
+	</insert>
+	
+	<!-- 신고하기 누르고 인서트 끝나면 다시 위시+댓글 화면으로 넘어가기 위해 wish_no 알아오기 -->
+	<select id="getWishNoByWishReplyNo" resultType="int">
+		select wish_no from wish_reply 
+		where wish_reply.no = #{wish_reply_no}	
+	</select>
+	
+
+	<!-- 위시에 좋아요 누르기 -->
+	<insert id="likeWish">
+		insert into wish_like values(
+			WISH_LIKE_SEQ.nextval,
+			#{member_no}
+			#{wish_no}
+			SYSDATE
+		)
+	</insert>
+	
+	
+	
+	
+	
+	
+	
+	
+	<!-- 카테고리 관련... -->
+	<!-- member_no로 small_category 불러오기 -->
+	<select id="selectSmallCategoryByMemberNo" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select sc.* from member_category mc, small_category sc
+		where mc.small_category_no = sc.no
+		and member_no = #{member_no}
+	</select>
+	<!-- small_category_no로 big_category 불러오기 -->
+	<select id="selectBigCategoryBySmallNo" resultType="com.ja.shape.vo.BigCategoryVo">
+		select * from big_category bc, small_category sc
+		where bc.no = sc.big_category_no
+		and sc.no = #{small_category_no}
+	</select>
+	
+	
+	
+	<!-- wish 관련.. -->
+	<!-- wish_run PK 생성하기 -->
+	<select id="selectWishRunPK" resultType="int">
+		select wish_run_seq.nextval from dual
+	</select>
+	<!-- wish_no로 wish 검색하기 -->
+	<select id="selectWishByNo" resultType="com.ja.shape.vo.WishVo">
+		select * from wish
+		where no = #{wish_no}
+	</select>
+	
+	
+	
+	
+	<!-- todo 관련... -->
+	<!-- wish_no로 todo 검색하기 -->
+	<select id="selectTodoByWishNo" resultType="com.ja.shape.vo.TodoVo">
+		select * from todo
+		where wish_no = #{wish_no}
+	</select>
+	<!-- todo_no로 todo 불러오기. -->
+	<select id="selectTodoByNo" resultType="com.ja.shape.vo.TodoVo">
+		select * from todo
+		where no = #{todo_no}
+	</select>
+	
+	
+	
+	<!-- wish_run 관련... -->
+	<!-- wish_run 생성하기 -->
+	<insert id="insertWishRunByVo">
+		insert into wish_run values(
+		    #{no},
+		    #{member_no},
+		    #{wish_no},
+		    #{content},
+		    #{start_date},
+		    #{end_date},
+		    null,
+		    sysdate
+		)
+	</insert>
+	<!-- wish_run_no로 wish_run 얻기. -->
+	<select id="selectWishRunByNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run
+		where no = #{wish_run_no}
+	</select>
+	<!-- wish_run 불러오기 -->
+	<select id="selectWishRunByMemberNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run
+		where member_no = #{member_no}
+	</select>
+	<!-- wish_run 불러오기 -->
+	<select id="selectRunningWishRunByMemberNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run
+		where member_no = #{member_no}
+		and to_char(end_date, 'yyyy-MM-dd') <![CDATA[ >= ]]> to_char(sysdate, 'yyyy-MM-dd')
+		and quit_date is null
+	</select>
+	<!-- wish_run 포기하기 -->
+	<update id="updateWishRunQuitDateByNo">
+		update wish_run 
+		set quit_date = sysdate
+		where no = #{wish_run_no}
+	</update>
+	<!-- member_no로  포기한 wish_run 불러오기 -->
+	<select id="selectWishRunByEndDateAndMemberNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run
+		where member_no = #{member_no}
+		and quit_date is not null
+		order by quit_date
+	</select>
+	<!-- member_no로 일정이 끝난 wish_run 불러오기 -->
+	<select id="selectEndWishRunByMemberNo" resultType="com.ja.shape.vo.WishRunVo">
+		select * from wish_run
+		where member_no = #{member_no}
+		and to_char(end_date, 'yyyy-MM-dd') <![CDATA[ < ]]> to_char(sysdate, 'yyyy-MM-dd')
+	</select>
+	
+	
+	
+	
+	<!-- todo_run 관련... -->
+	<!-- todo_run 생성하기 -->
+	<insert id="insertTodoRunByVo">
+		insert into todo_run values(
+		    TODO_RUN_SEQ.nextval,
+		    #{todo_no},
+		    #{wish_run_no},
+		    #{check},
+		    #{todo_day}
+		)
+	</insert>
+	<!-- wish_run_no로 todo_run의 todo_day를 불러오기. -->
+	<select id="selectTodoRunDayByNo" resultType="com.ja.shape.vo.TodoRunVo">
+		select *
+		from todo_run 
+		where wish_run_no = #{wish_run_no}
+		order by todo_day
+	</select>
+	<!-- wish_run_no로 todo_run todo_day 얻기. -->
+	<select id="selectTodoRunDateByWishRunNo" resultType="java.util.Date">
+		select distinct todo_day from todo_run
+		where wish_run_no = #{wish_run_no}
+		order by todo_day
+	</select>
+	<!-- todo_no과 check를 통해 todo_run 갯수 불러오기. -->
+	<select id="selectTodoRunCountByVo" resultType="int">
+		select distinct count(no) from todo_run
+		where todo_no = #{todo_no}
+		and wish_run_no = #{wish_run_no}
+		and "check" = #{check}
+	</select>
+	<!-- todo_run check하기 -->
+	<update id="updateTodoRunByNo">
+		update todo_run 
+		set "check" = 'y' 
+		where no = #{no}
+	</update>
+
+	
+
+	<!-- wish_reliability 관련.. -->
+	<!-- wish_reliability 생성하기 -->
+	<insert id="insertReliabilityByVo">
+		insert into wish_reliability values(
+		    WISH_RELIABILITY_SEQ.nextval,
+		    #{member_no},
+		    #{wish_run_no},
+		    #{good_bad},
+		    SYSDATE
+		)
+	</insert>
+	<!-- member_no로 내 Reliability 체크 확인하기.  -->
+	<select id="selectMyReliabilityByMemberNo" resultType="com.ja.shape.vo.WishReliabilityVo">
+		select * from wish_reliability
+		where member_no = #{member_no}
+	</select>
+	<!-- vo로 Reliability 수정하기 -->
+	<update id="updateReliabilityByVo">
+		update wish_reliability 
+		set good_bad = #{good_bad}
+		where member_no = #{member_no}
+	</update>
+	<!-- wish_run_no로 Reliability 불러오기 -->
+	<select id="selectCountReliabilityByVo" resultType="int">
+		select count(no) from wish_reliability 
+		where wish_run_no = #{wish_run_no}
+		and good_bad = #{good_bad}
+	</select>
+	<!-- Reliability 지우기 -->
+	<delete id="deleteReliabilityByVo">
+		delete from wish_reliability
+		where member_no = #{member_no}
+	</delete>
+	
+	
+	
+	<!-- wish_run_reply 관련... -->
+	<!-- wish_run_no로 wish_run_reply 불러오기. -->
+	<select id="selectWishRunReplyByWishRunNo" resultType="com.ja.shape.vo.WishRunReplyVo">
+		select * from wish_run_reply
+		where wish_run_no = #{wish_run_no}
+		order by write_date
+	</select>
+
+		
+		
+		
+	<!-- 이상하게 작성한 것들... -->
+	<!-- todo_day로 wish_run_no 불러오기. (sql에서 결과값은 wish_run_no만 들어가있음)  -->
+	<select id="selectTodoRunWishRunNoByDay" resultType="com.ja.shape.vo.TodoRunVo">
+		select wish_run_no from todo_run
+		WHERE TO_CHAR(todo_day , 'yyyy-mm-dd') = TO_CHAR(#{todo_day} , 'yyyy-mm-dd')
+	</select>
+	<!-- todo_day로 todo_run 불러오기. -->
+	<select id="selectTodoRunByDay" resultType="com.ja.shape.vo.TodoRunVo">
+		select * from todo_run
+		WHERE TO_CHAR(todo_day , 'yyyy-mm-dd') = TO_CHAR(#{todo_day} , 'yyyy-mm-dd')
+		and wish_run_no in (
+			select no from wish_run
+			where member_no = #{member_no}
+		)
+		
+		
+	</select>
+	<!-- todo_day와  todo_run 불러오기.-->
+	<select id="selectTodoRunByVo" resultType="com.ja.shape.vo.TodoRunVo">
+		select * from todo_run
+		WHERE TO_CHAR(todo_day , 'yyyy-mm-dd') = TO_CHAR(#{todo_day} , 'yyyy-mm-dd')
+		and wish_run_no = #{wish_run_no}
+	</select>
+	
+	
+	
+	
+	<!-- wish 상세 페이지 관련..-->
+	<!-- wish_no로 실행하는 위시런 갯수 얻기. -->
+	<select id="selectWishRunCountByWishNo" resultType="int">
+		select count(*) from wish_run
+		where wish_no = #{wish_no}
+	</select>
+	<!-- wish_no로 포기한 위시런 갯수 얻기  -->
+	<select id="selectQuitWishRunByWishNo" resultType="int">
+		select count(*) from wish_run
+		where wish_no = #{wish_no}
+		and quit_date is not null
+	</select>
+	<!-- wish_no로 조회수 늘리기. -->
+	<update id="updateWishReadCountByNo">
+		update wish 
+		set read_count = (select read_count from wish
+		where no = #{wish_no}) + 1
+		where no = #{wish_no}
+	</update>
+	
+	
+	
+	
+	
+		<!-- other wish 페이지 쿼리들 -->
+	
+	<!-- 다른사람들의 위시들 (친구가 프렌즈를 걸어놓은 위시 + 퍼블릭 위시 + 한명이라도 실행한 적이 있는 위시)  -->
+	<select id="getWishOfOtherPeople" resultType="com.ja.shape.vo.WishVo">
+	<![CDATA[
+		select * from wish w
+		where (w.member_no in(
+	        SELECT ff.member_no FROM friends_group fg , friends ff
+	        WHERE fg.no = ff.friends_group_no
+	        AND fg.member_no = #{member_no}
+	        ) 
+	        and access_option = 'onlyfriends'
+	      )
+	    or (w.member_no != #{member_no} and access_option = 'public')
+	    AND (
+			    select count(*) from wish_run r WHERE r.wish_no = w.no
+			) >= 1 order by no desc
+	    ]]>
+	</select>
+
+
+	<!-- 위시의 좋아요 수 가져오기 -->
+	<select id="getLikeCount" resultType="int">
+		select count(*) from wish_like
+		where wish_no = #{wish_no}
+	</select>
+	
+	<!-- 위시의 작성자 아이디 가져오기 -->
+	<select id="whoMadeThisWish" resultType="java.lang.String">
+		select id from member
+		where no = #{writer_no}
+	</select>
+	
+	<!-- wish_no로 small_category 불러오기 -->
+	<select id="getSmallCategoryNameByWishNo" resultType="java.lang.String">
+		select small_name from small_category, wish
+		where wish.no = #{wish_no}
+		and small_category.no = wish.small_category_no
+	</select>
+	
+	
+	<!-- big_category 불러오기 -->
+	<select id="getBigCategory" resultType="com.ja.shape.vo.BigCategoryVo">
+		select * 
+		from big_category 
+		order by no
+	</select>
+	
+	<!-- small_category 불러오기 -->
+	<select id="getSmallCategory" resultType="com.ja.shape.vo.SmallCategoryVo">
+		select * 
+		from small_category 
+		order by no
+	</select>	
+	
+
+	
+	<!-- 검색 옵션 - 아이디 -->
+	<select id="getOtherWishSelectOptionID" resultType="com.ja.shape.vo.WishVo">
+		select w.* from (
+		    select ii.* from wish ii , member m where m.no = ii.member_no AND m.id like '%' || #{searchString} || '%'
+		)  w 
+		where (w.member_no in(
+		        SELECT ff.member_no FROM friends_group fg , friends ff
+		        WHERE fg.no = ff.friends_group_no
+		        AND fg.member_no = #{member_no}
+		        ) 
+		        and w.access_option = 'onlyfriends'
+		      )
+		     or (w.member_no != #{member_no} and access_option = 'public')
+		    AND (
+				    select count(*) from wish_run r WHERE r.wish_no = w.no
+				) >= 1 order by w.no desc	
+	</select>	
+	
+	<!-- 검색 옵션 - 주제 -->
+	<select id="getOtherWishSelectOptionTitle" resultType="com.ja.shape.vo.WishVo">
+		select * from wish w
+		where (w.member_no in(
+	        SELECT ff.member_no FROM friends_group fg , friends ff
+	        WHERE fg.no = ff.friends_group_no
+	        AND fg.member_no = #{member_no}
+	        ) 
+	        and access_option = 'onlyfriends'
+	      )
+	     or (w.member_no != #{member_no} and access_option = 'public')
+	    AND w.title like '%'||#{searchString}||'%'
+	    AND (
+			    select count(*) from wish_run r WHERE r.wish_no = w.no
+			) >= 1 order by no desc
+	</select>	
+	
+	
+	
+	
+</mapper>
